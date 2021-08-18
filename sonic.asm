@@ -22,7 +22,7 @@ Revision:	equ 2
 
 ZoneCount:	equ 6	; discrete zones are: GHZ, MZ, SYZ, LZ, SLZ, and SBZ
 
-OptimiseSound:	equ 0	; change to 1 to optimise sound queuing
+OptimiseSound:	equ 1	; change to 1 to optimise sound queuing
 
 ; ===========================================================================
 
