@@ -1,3 +1,3 @@
-this is basically a sonic 1 github disassembly that anyone can edit and push to here
+This is basically a Sonic 1 Github Disassembly that anyone can edit and push here.
 
-im not sure on rules but just dont add anything completely game breaking or something that crashes the game
+I'm not sure on the rules but just don't add anything completely game breaking or something that crashes the game!

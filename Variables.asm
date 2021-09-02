@@ -140,7 +140,7 @@ v_plc_buffer:	equ $FFFFF680	; pattern load cues buffer (maximum $10 PLCs) ($60 b
 v_ptrnemcode:	equ $FFFFF6E0	; pointer for nemesis decompression code ($1502 or $150C) (4 bytes)
 
 f_plc_execute:	equ $FFFFF6F8	; flag set for pattern load cue execution (2 bytes)
-
+v_plc_buffer_end:   equ $FFFFF700
 v_screenposx:	equ $FFFFF700	; screen position x (2 bytes)
 v_screenposy:	equ $FFFFF704	; screen position y (2 bytes)
 v_bgscreenposx:	equ $FFFFF708	; background screen position x (2 bytes)

@@ -106,10 +106,10 @@ loc_E0:
 		dc.l ErrorTrap
 		dc.l ErrorTrap
 	endif
-Console:	dc.b "SEGA MEGA DRIVE " ; Hardware system ID (Console name)
-Date:		dc.b "(C)SEGA 1991.APR" ; Copyright holder and release date (generally year)
-Title_Local:	dc.b "SONIC THE               HEDGEHOG                " ; Domestic name
-Title_Int:	dc.b "SONIC THE               HEDGEHOG                " ; International name
+Console:	dc.b "SEGA GENESIS    " ; Hardware system ID (Console name)
+Date:		dc.b "DULSH0X SEP.2021" ; Copyright holder and release date (generally year)
+Title_Local:dc.b "SONIC 1 ANARCHY                                 " ; Domestic name
+Title_Int:	dc.b "SONIC 1 ANARCHY                                 " ; International name
 Serial:		if Revision=0
 		dc.b "GM 00001009-00"   ; Serial/version number (Rev 0)
 		else
@@ -133,12 +133,12 @@ Region:		dc.b "JUE             " ; Region (Country code)
 EndOfHeader:
 
 ; ===========================================================================
-; Crash/Freeze the 68000. Unlike Sonic 2, Sonic 1 uses the 68000 for playing music, so it stops too
+
 
 ErrorTrap:
 		nop	
 		nop	
-		bra.s	ErrorTrap
+		nop
 ; ===========================================================================
 
 EntryPoint:
@@ -292,20 +292,20 @@ GameProgram:
 		beq.w	GameInit	; if yes, branch
 
 CheckSumCheck:
-		movea.l	#EndOfHeader,a0	; start	checking bytes after the header	($200)
-		movea.l	#RomEndLoc,a1	; stop at end of ROM
-		move.l	(a1),d0
-		moveq	#0,d1
+	;	movea.l	#EndOfHeader,a0	; start	checking bytes after the header	($200)
+	;	movea.l	#RomEndLoc,a1	; stop at end of ROM
+	;	move.l	(a1),d0
+	;	moveq	#0,d1
 
-	@loop:
-		add.w	(a0)+,d1
-		cmp.l	a0,d0
-		bhs.s	@loop
-		movea.l	#Checksum,a1	; read the checksum
-		cmp.w	(a1),d1		; compare checksum in header to ROM
-		bne.w	CheckSumError	; if they don't match, branch
+	;@loop:
+	;	add.w	(a0)+,d1
+	;	cmp.l	a0,d0
+	;	bhs.s	@loop
+	;	movea.l	#Checksum,a1	; read the checksum
+	;	cmp.w	(a1),d1		; compare checksum in header to ROM
+	;	bne.w	CheckSumError	; if they don't match, branch
 
-	CheckSumOk:
+	;CheckSumOk:
 		lea	($FFFFFE00).w,a6
 		moveq	#0,d7
 		move.w	#$7F,d6
@@ -362,17 +362,17 @@ ptr_GM_Credits:	bra.w	GM_Credits	; Credits ($1C)
 		rts	
 ; ===========================================================================
 
-CheckSumError:
-		bsr.w	VDPSetupGame
-		move.l	#$C0000000,(vdp_control_port).l ; set VDP to CRAM write
-		moveq	#$3F,d7
+;CheckSumError:
+;		bsr.w	VDPSetupGame
+;		move.l	#$C0000000,(vdp_control_port).l ; set VDP to CRAM write
+;		moveq	#$3F,d7
 
-	@fillred:
-		move.w	#cRed,(vdp_data_port).l ; fill palette with red
-		dbf	d7,@fillred	; repeat $3F more times
+;	@fillred:
+;		move.w	#cRed,(vdp_data_port).l ; fill palette with red
+;		dbf	d7,@fillred	; repeat $3F more times
 
-	@endlessloop:
-		bra.s	@endlessloop
+;	@endlessloop:
+;		bra.s	@endlessloop
 ; ===========================================================================
 
 BusError:
@@ -536,7 +536,7 @@ ShowErrorValue:
 ErrorWaitForC:
 		bsr.w	ReadJoypads
 		cmpi.b	#btnC,(v_jpadpress1).w ; is button C pressed?
-		bne.w	ErrorWaitForC	; if not, branch
+		bne.s	ErrorWaitForC	; if not, branch
 		rts	
 ; End of function ErrorWaitForC
 
@@ -631,7 +631,7 @@ VBla_02:
 
 VBla_14:
 		tst.w	(v_demolength).w
-		beq.w	@end
+		beq.s	@end
 		subq.w	#1,(v_demolength).w
 
 	@end:
@@ -643,7 +643,7 @@ VBla_04:
 		bsr.w	LoadTilesAsYouMove_BGOnly
 		bsr.w	sub_1642
 		tst.w	(v_demolength).w
-		beq.w	@end
+		beq.s	@end
 		subq.w	#1,(v_demolength).w
 
 	@end:
@@ -708,7 +708,7 @@ Demo_Time:
 		jsr	(HUD_Update).l
 		bsr.w	ProcessDPLC2
 		tst.w	(v_demolength).w ; is there time left on the demo?
-		beq.w	@end		; if not, branch
+		beq.s	@end		; if not, branch
 		subq.w	#1,(v_demolength).w ; subtract 1 from time left
 
 	@end:
@@ -734,7 +734,7 @@ VBla_0A:
 
 	@nochg:
 		tst.w	(v_demolength).w	; is there time left on the demo?
-		beq.w	@end	; if not, return
+		beq.s	@end	; if not, return
 		subq.w	#1,(v_demolength).w	; subtract 1 from time left in demo
 
 	@end:
@@ -804,7 +804,7 @@ VBla_16:
 
 	@nochg:
 		tst.w	(v_demolength).w
-		beq.w	@end
+		beq.s	@end
 		subq.w	#1,(v_demolength).w
 
 	@end:
@@ -928,7 +928,7 @@ ReadJoypads:
 		bsr.s	@read		; do the first joypad
 		addq.w	#2,a1		; do the second	joypad
 
-	@read:
+    @read:
 		move.b	#0,(a1)
 		nop	
 		nop	
@@ -1045,7 +1045,7 @@ ClearScreen:
 
 		lea	(v_spritetablebuffer).w,a1
 		moveq	#0,d0
-		move.w	#($280/4),d1	; This should be ($280/4)-1, leading to a slight bug (first bit of v_pal_water is cleared)
+		move.w	#($280/4)-1,d1
 
 	@clearsprites:
 		move.l	d0,(a1)+
@@ -1053,7 +1053,7 @@ ClearScreen:
 
 		lea	(v_hscrolltablebuffer).w,a1
 		moveq	#0,d0
-		move.w	#($400/4),d1	; This should be ($400/4)-1, leading to a slight bug (first bit of the Sonic object's RAM is cleared)
+		move.w	#($400/4)-1,d1
 
 	@clearhscroll:
 		move.l	d0,(a1)+
@@ -1206,7 +1206,7 @@ NewPLC:
 
 ClearPLC:
 		lea	(v_plc_buffer).w,a2 ; PLC buffer space in RAM
-		moveq	#$1F,d0	; bytesToLcnt(v_plc_buffer_end-v_plc_buffer)
+		moveq	#(v_plc_buffer_end-v_plc_buffer)>>2-1,d0
 
 	@loop:
 		clr.l	(a2)+
@@ -1319,7 +1319,7 @@ locret_16DA:
 
 loc_16DC:
 		lea	(v_plc_buffer).w,a0
-		moveq	#$15,d0
+		moveq	#(v_ptrnemcode-8-v_plc_buffer)>>2-1,d0
 
 loc_16E2:
 		move.l	6(a0),(a0)+

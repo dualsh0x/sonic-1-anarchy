@@ -687,20 +687,40 @@ ptr_flgend
 ; ---------------------------------------------------------------------------
 ; Sound_E1: PlaySega:
 PlaySegaSound:
-		move.b	#$88,(z80_dac_sample).l	; Queue Sega PCM
-		startZ80
-		move.w	#$11,d1
-; loc_71FC0:
-@busyloop_outer:
-		move.w	#-1,d0
-; loc_71FC4:
-@busyloop:
+		lea	(SegaPCM).l,a2			; Load the SEGA PCM sample into a2. It's important that we use a2 since a0 and a1 are going to be used up ahead when reading the joypad ports 
+		move.l	#(SegaPCM_End-SegaPCM),d3			; Load the size of the SEGA PCM sample into d3 
+		move.b	#$2A,(ym2612_a0).l		; $A04000 = $2A -> Write to DAC channel	  
+PlayPCM_Loop:	  
+		move.b	(a2)+,(ym2612_a1).l		; Write the PCM data (contained in a2) to $A04001 (YM2612 register D0) 
+		sub.l	#1,d3				; Subtract 1 from the PCM sample size 
+		beq.s	return_PlayPCM			; If d3 = 0, we finished playing the PCM sample, so stop playing, leave this loop, and unfreeze the 68K 
+		lea	(v_jpadhold1).w,a0		; address where JoyPad states are written 
+		lea	($A10003).l,a1			; address where JoyPad states are read from 
+		; some duplicated code RM chose to put here :P
+		move.b	#0,(a1)
 		nop	
-		dbf	d0,@busyloop
-
-		dbf	d1,@busyloop_outer
-
-		addq.w	#4,sp	; Tamper return value so we don't return to caller
+		nop	
+		move.b	(a1),d0
+		lsl.b	#2,d0
+		andi.b	#$C0,d0
+		move.b	#$40,(a1)
+		nop	
+		nop	
+		move.b	(a1),d1
+		andi.b	#$3F,d1
+		or.b	d1,d0
+		not.b	d0
+		move.b	(a0),d1
+		eor.b	d0,d1
+		move.b	d0,(a0)+
+		and.b	d0,d1
+		move.b	d1,(a0)+
+		
+		btst	#7,(v_jpadhold1).w		; Check for Start button 
+		bne.s	return_PlayPCM			; If start is pressed, stop playing, leave this loop, and unfreeze the 68K 
+		bra.s	PlayPCM_Loop			; Otherwise, continue playing PCM sample 
+return_PlayPCM: 
+		addq.w	#4,sp
 		rts	
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -2469,15 +2489,7 @@ cfOpF9:
 ; ===========================================================================
 
 Kos_Z80:
-		incbin	"sound\z80.bin", 0, $15
-		dc.b ((SegaPCM&$FF8000)/$8000)&1						; Least bit of bank ID (bit 15 of address)
-		incbin	"sound\z80.bin", $16, 6
-		dc.b ((SegaPCM&$FF8000)/$8000)>>1						; ... the remaining bits of bank ID (bits 16-23)
-		incbin	"sound\z80.bin", $1D, $93
-		dc.w ((SegaPCM&$FF)<<8)+((SegaPCM&$7F00)>>8)|$80				; Pointer to Sega PCM, relative to start of ROM bank (i.e., little_endian($8000 + SegaPCM&$7FFF)
-		incbin	"sound\z80.bin", $B2, 1
-		dc.w (((SegaPCM_End-SegaPCM)&$FF)<<8)+(((SegaPCM_End-SegaPCM)&$FF00)>>8)	; ... the size of the Sega PCM (little endian)
-		incbin	"sound\z80.bin", $B5, $16AB
+		incbin	"sound\z80.bin"
 		even
 
 Music81:	incbin	"sound/music/Mus81 - GHZ.bin"
@@ -2675,20 +2687,7 @@ SoundCF:	incbin	"sound/sfx/SndCF - Signpost.bin"
 		even
 SoundD0:	incbin	"sound/sfx/SndD0 - Waterfall.bin"
 		even
-
-		; Don't let Sega sample cross $8000-byte boundary
-		; (DAC driver doesn't switch banks automatically)
-		if (*&$7FFF)+Size_of_SegaPCM>$8000
-			align $8000
-		endif
+		
 SegaPCM:	incbin	"sound/dac/sega.pcm"
 SegaPCM_End
 		even
-
-		if SegaPCM_End-SegaPCM>$8000
-			inform 3,"Sega sound must fit within $8000 bytes, but you have a $%h byte Sega sound.",SegaPCM_End-SegaPCM
-		endc
-		if SegaPCM_End-SegaPCM>Size_of_SegaPCM
-			inform 3,"Size_of_SegaPCM = $%h, but you have a $%h byte Sega sound.",Size_of_SegaPCM,SegaPCM_End-SegaPCM
-		endc
-
