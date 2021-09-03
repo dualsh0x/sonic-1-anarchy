@@ -28,22 +28,15 @@
 ;===============================================================================  
 Slow_Motion_Flag      equ $FFFFFFE1
 Debug_Mode_Flag       equ $FFFFFFE2
-
-Level_Select_Menu_snd   = $0000
-Emerald_Snd             = $0093
-Ring_Snd                = $00B5
-Volume_Down             = $00E0
-Stop_Sound              = $00E4
 ;-------------------------------------------------------------------------------
 Level_Select_Menu:
-                move.b  #Stop_Sound, D0
-                bsr     Menu_Play_Music
-                bsr     Menu_Pal_FadeFrom
+                sfx     bgm_Fade,0,0,1
+                jsr     PaletteFadeOut
                 move    #$2700, SR
                 move.w  ($FFFFF60C).w, D0
                 andi.b  #$BF, D0
                 move.w  D0, ($00C00004)
-                bsr     Menu_ClearScreen
+                jsr     ClearScreen
                 lea     ($00C00004), A6
                 move.w  #$8004, (A6)
                 move.w  #$8230, (A6)
@@ -68,22 +61,22 @@ Offset_0x026ADA:
                 move.l  #$FFFFDC00, ($FFFFDCFC).w
                 move.l  #$42000000, ($00C00004)
                 lea     (Menu_Font), A0
-                bsr     Menu_NemesisDec
+                jsr     NemDec
                 move.l  #$52000000, ($00C00004)
                 lea     (Level_Icons), A0
-                jsr     Menu_NemesisDec
+                jsr     NemDec
 ;-------------------------------------------------------------------------------                
 ; Carrega o Mapeamento do Fundo Sonic/Miles               
 ;-------------------------------------------------------------------------------
                 lea     ($FFFF0000), A1
                 lea     (Menu_Mappings), A0
                 move.w  #$6000, D0
-                bsr     Menu_EnigmaDec
+                jsr     EniDec
                 lea     ($FFFF0000), A1
                 move.l  #$60000003, D0
                 moveq   #$27, D1
                 moveq   #$1B, D2
-                bsr     Menu_ShowVDPGraphics
+                jsr     TilemapToVRAM
 ;-------------------------------------------------------------------------------                
 ; Carrega o Texto do Menu de Sele??o de Fases               
 ;-------------------------------------------------------------------------------
@@ -133,8 +126,8 @@ Menu_Clear_Act_x:						; Limpa os n?meros dos acts n?o usados e carrega o "*" do
 		move.w	#$0000,(a2)				; Load " "
 		lea		$0050(a2),a2
 		dbra	d1,Menu_Clear_Act_x
-;		lea     $FF10(a2), a2
-;		move.w  #$001A, (a2)          ; Load "*"
+		lea     $FFFFFF10(a2), a2
+		move.w  #$001A, (a2)          ; Load "*"
 ;-------------------------------------------------------------------------------
 ; Carrega o Mapeamento das Asas onde são mostrados os ícones
 ;------------------------------------------------------------------------------- 
@@ -154,12 +147,12 @@ Menu_Loop_Load_Wings:
                 lea     ($FFFF08C0), A1
                 lea     (Icons_Mappings), A0
                 move.w  #$0090, D0
-                bsr     Menu_EnigmaDec
+                jsr     EniDec
                 lea     ($FFFF0000), A1
                 move.l  #$40000003, D0
                 moveq   #$27, D1
                 moveq   #$1B, D2
-                bsr     Menu_ShowVDPGraphics
+                jsr     TilemapToVRAM
 ;-------------------------------------------------------------------------------                
                 moveq   #$00, D3
                 bsr     Offset_0x027040
@@ -168,13 +161,12 @@ Menu_Loop_Load_Wings:
                 clr.b   ($FFFFF711).w
                 clr.w   ($FFFFF7F0).w
 ;------------------------------------------------------------------------------- 
-                move.w  #$0000, ($FFFFF7B8).w  ; Inicializa os quadros das animações do menu
-                move.w  #$0000, ($FFFFF7B9).w  ; Inicializa o contador das animações do menu 
+                clr.w   ($FFFFF7B8).w  ; Inicializa os quadros das animações do menu 
                 jsr     Dynamic_Menu           ; Chama a rotina de animação
 ;-------------------------------------------------------------------------------
 
                 moveq   #$14, D0
-                bsr     Menu_PalLoad1
+                jsr     PalLoad1
                 lea     ($FFFFFB40).w, A1
                 lea     ($FFFFFBC0).w, A2
                 moveq   #$07, D1
@@ -182,10 +174,9 @@ Offset_0x026C26:
                 move.l  (A1), (A2)+
                 clr.l   (A1)+
                 dbra    D1, Offset_0x026C26
-                move.b  #Level_Select_Menu_snd, D0
-                bsr     Menu_Play_Music
+                music   0,0,0,1
                 moveq   #$00, D0
-                jsr     Menu_LoadPLC2
+                jsr     NewPLC
                 move.w  #$0707, ($FFFFF614).w
                 clr.w   ($FFFFFFDC).w
                 clr.l   ($FFFFEE00).w
@@ -193,14 +184,14 @@ Offset_0x026C26:
                 clr.w   ($FFFFFF0C).w
                 clr.w   ($FFFFFF0E).w
                 move.b  #$18, ($FFFFF62A).w
-                bsr     Menu_DelayProgram
+                jsr     WaitForVBla
                 move.w  ($FFFFF60C).w, D0
                 ori.b   #$40, D0
                 move.w  D0, ($00C00004)
-                bsr     Menu_Pal_FadeTo
+                jsr     PaletteFadeIn
 Menu_Main_Loop:
                 move.b  #$18, ($FFFFF62A).w
-                bsr     Menu_DelayProgram
+                jsr     WaitForVBla
                 move    #$2700, SR
                 moveq   #$00, D3
                 bsr     Offset_0x026ED8
@@ -209,7 +200,7 @@ Menu_Main_Loop:
                 bsr     Offset_0x027048
                 move    #$2300, SR
                 jsr     Dynamic_Menu
-                bsr     Menu_RunPLC
+                jsr     RunPLC
                 btst    #$04, ($FFFFF604).w
                 beq.s   Offset_0x026CC6
                 move.w  #$0001, ($FFFFFFD8).w
@@ -246,7 +237,7 @@ Offset_0x026CD8:
                 move.w  ($FFFFFF72).w, ($FFFFFF70).w
                 rts
 Menu_Game_Reset:
-                move.b  #$0000, ($FFFFF600).w
+                move.b  #$0004, ($FFFFF600).w
                 rts
 Menu_Ending_Sequence:
                 move.b	#$0018,($FFFFF600).w
@@ -274,12 +265,9 @@ Menu_Load_Level:
                 move.w  D0, ($FFFFFED0).w
                 move.l  D0, ($FFFFFED2).w
                 move.l  D0, ($FFFFFED6).w
-                nop
-                nop
                 move.l  #$00001388, ($FFFFFFC0).w
                 move.l  #$00001388, ($FFFFFFC4).w
-                move.b  #Volume_Down, D0
-                bsr     Menu_Play_Music     
+                sfx     bgm_Fade,0,0,1  
                 moveq   #$00, D0
                 move.w  D0, ($FFFFFF8A).w
                 move.w  D0, ($FFFFFFDC).w
@@ -339,7 +327,7 @@ Offset_0x026E6C:
                 beq.s   Offset_0x026E9A
                 move.w  ($FFFFFF84).w, D0
                 addi.w  #$0080, D0
-                bsr     Menu_Play_Music 
+                jsr     PlaySound 
                 lea     (Code_Debug_Mode), A0   
                 lea     (Code_All_Emeralds), A2 
                 lea     ($FFFFFF0A).w, A1
@@ -448,7 +436,7 @@ Menu_Code_Test:
                 move.w  #$0101, (A1)
                 bra     Menu_Set_Debug_Flag 
 Menu_Reset_Debug_Mode_Code_Counter: 
-                move.w  #$0000, ($FFFFFF0C).w
+                clr.w   ($FFFFFF0C).w
 Menu_All_Emeralds_Code_Test: 
                 move.w  ($FFFFFF0E).w, D0
                 adda.w  D0, A2
@@ -461,23 +449,23 @@ Menu_All_Emeralds_Code_Test:
                 tst.w   D2
                 bne.s   Menu_Set_All_Emeralds 
 Menu_Set_Debug_Flag: 
-                move.b  #$01, (Slow_Motion_Flag).w
-                move.b  #$01, (Debug_Mode_Flag).w
-                move.b  #Ring_Snd, D0
-                bsr     Menu_Play_Music 
+                st.b    (Slow_Motion_Flag).w
+                st.b    (Debug_Mode_Flag).w
+                sfx     sfx_Ring,0,0,1
                 bra.s   Menu_Reset_All_Emerald_Code_Counter 
 Menu_Set_All_Emeralds: 
                 move.w  #$0006, ($FFFFFE56).w
-                move.b  #Emerald_Snd, D0
-                bsr     Menu_Play_Music 
+                music   bgm_Emerald,0,0,1
 Menu_Reset_All_Emerald_Code_Counter: 
-                move.w  #$0000, ($FFFFFF0E).w
+                clr.w   ($FFFFFF0E).w
 Menu_Code_Not_0xFF: 
                 rts               
 Code_Debug_Mode: 
                 dc.b    $01, $09, $09, $02, $01, $01, $02, $04, $FF
+                even
 Code_All_Emeralds: 
                 dc.b    $04, $01, $02, $06, $FF
+                even
 ;-------------------------------------------------------------------------------                 
 Offset_0x027040:
                 bsr     Offset_0x026F7A
@@ -500,7 +488,7 @@ Offset_0x027050:
                 move.l  #$4B360003, D0        ; Posição Horizontal dos Ícones
                 moveq   #$03, D1
                 moveq   #$02, D2
-                bsr     Menu_ShowVDPGraphics 
+                jsr     TilemapToVRAM 
                 lea     (Icon_Palettes), A1  
                 moveq   #$00, D0
                 move.b  (A3), D0
@@ -544,36 +532,38 @@ Sonic_Miles_Frame_Select:
                 dc.b    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
                 dc.b    $05, $0A
                 dc.b    $0F, $0F, $0F, $0F, $0F, $0F, $0F, $0F, $0F, $0F, $0F, $0F, $0F, $0F
-                dc.b    $0A, $05   
+                dc.b    $0A, $05 
+                even
                 ; 0 = 0000000000  ; 1 = 0101000000  ; 2 = 1010000000 ; 3 = 1111000000
 ;------------------------------------------------------------------------------                  
 __ = $00
-_A = $1E
-_B = $1F
-_C = $20
-_D = $21
-_E = $22    
-_F = $23
-_G = $24
-_H = $25
-_I = $26
-_J = $27
-_K = $28
-_L = $29
-_M = $2A
-_N = $2B
-_O = $2C
-_P = $2D
-_Q = $2E
-_R = $2F
-_S = $30
-_T = $31
-_U = $32
-_V = $33
-_W = $34
-_X = $35
-_Y = $36
-_Z = $37
+    rsset $1E
+_A: rs.b 1
+_B: rs.b 1
+_C: rs.b 1
+_D: rs.b 1
+_E: rs.b 1 
+_F: rs.b 1
+_G: rs.b 1
+_H: rs.b 1
+_I: rs.b 1
+_J: rs.b 1
+_K: rs.b 1
+_L: rs.b 1
+_M: rs.b 1
+_N: rs.b 1
+_O: rs.b 1
+_P: rs.b 1
+_Q: rs.b 1
+_R: rs.b 1
+_S: rs.b 1
+_T: rs.b 1
+_U: rs.b 1
+_V: rs.b 1
+_W: rs.b 1
+_X: rs.b 1
+_Y: rs.b 1
+_Z: rs.b 1
 _st = $1A
 ;-------------------------------------------------------------------------------  
 Icon_Palettes: 
@@ -615,10 +605,12 @@ Icon_Palettes:
                 dc.w    $0888, $0444, $08AE, $046A, $000E, $0000, $00EE, $0000
                 dc.w    $0000, $0000, $0A22, $0C42, $0000, $0E66, $0EEE, $0AAA
                 dc.w    $0888, $0444, $08AE, $046A, $000E, $0000, $00EE, $0000
+                even
 ;-------------------------------------------------------------------------------  
 Menu_Icon_List: 
                 dc.b    $00, $00, $00, $0E, $0E, $0E, $06, $06, $06, $0B, $0B, $0B, $0D, $0D, $0D, $09
                 dc.b    $09, $09, $04, $10, $0F, $11
+                even
 ;-------------------------------------------------------------------------------                 
 Menu_Text_Highlight:                  
                 dc.w    $0306, $0324, $0306, $0424, $0306, $0524, $0706, $0724
@@ -627,10 +619,12 @@ Menu_Text_Highlight:
                 dc.w    $1306, $1324, $1306, $1424, $1306, $1524, $032C, $034A
                 dc.w    $032C, $044A, $032C, $054A, $072C, $0000, $0B2C, $0000
                 dc.w    $0F2C, $0000, $132C, $134A
+                even
 ;-------------------------------------------------------------------------------                
 Menu_Text_Positions:                   
                 dc.w    $00F6, $0236, $0376, $04B6, $05F6, $011C, $025C, $039C
                 dc.w    $04DC, $061C
+                even
 ;-------------------------------------------------------------------------------                          
 Menu_Level_Select_Text: 
                 dc.b    $0E, _A, _D, _V, _E, _N, _T, _U, _R, _E, __, _S, _E, _V, _E, _N
@@ -643,6 +637,7 @@ Menu_Level_Select_Text:
                 dc.b    $0E, _S, _P, _E, _C, _I, _A, _L, __, _S, _T, _A, _G, _E, __, __
                 dc.b    $0E, _E, _N, _D, _I, _N, _G, __, _S, _E, _Q, _U, _E, _N, _C, _E
                 dc.b    $0E, _S, _O, _U, _N, _D, __, _T, _E, _S, _T, __, __, _st,__, __               
+                even
 ;-------------------------------------------------------------------------------
 Wings_Mappings: 
                 dc.w    $6000, $6000, $6000, $604D, $604E, $684E, $684D, $6000, $6000, $6000   
@@ -658,42 +653,27 @@ Wings_Mappings:
                 dc.w    $6000, $605E, $605F, $6060, $6061, $6062, $6063, $6064, $685E, $6000
 ;Wings_Line_6:
                 dc.w    $6000, $6000, $6065, $6066, $6067, $6867, $6866, $6865, $6000, $6000 
+                even
 ;-------------------------------------------------------------------------------    
 Pal_Menu:
                 incbin  'data\menu\menu.pal'    
-Menu_ClearScreen:
-                jmp     ClearScreen
-Menu_ShowVDPGraphics:                
-                jmp     TilemapToVRAM                
-Menu_NemesisDec: 
-                jmp     NemDec  
-Menu_LoadPLC2:      
-                jmp     NewPLC
-Menu_RunPLC:                    
-                jmp     RunPLC                          
-Menu_EnigmaDec
-                jmp     EniDec
-Menu_Pal_FadeTo:
-                jmp     PaletteFadeIn
-Menu_Pal_FadeFrom:
-                jmp     PaletteFadeOut     
-Menu_Play_Music:
-                jmp     PlaySound  
-Menu_PalLoad1:
-                jmp     PalLoad1
-Menu_DelayProgram:
-                jmp     WaitForVBla
+                even
 ;-------------------------------------------------------------------------------
 Menu_Font:
                 incbin  'data\menu\menufont.nem' 
+                even
 Level_Icons:
-                incbin  'data\menu\levelico.nem'   
+                incbin  'data\menu\levelico.nem'  
+                even
 Menu_Mappings:
                 incbin  'data\menu\menubg.eni'
+                even
 Icons_Mappings:
                 incbin  'data\menu\iconsmap.eni'
+                even
 Sonic_Miles_Spr:                                         
                 incbin  'data\menu\soncmils.dat'   
+                even
 ;===============================================================================
 ; Menu do Sonic 2 No Sonic 1 reprogramado por Esrael L. G. Neto
 ; [ Fim ]

@@ -54,7 +54,7 @@ Got_Loop:
 		dbf	d1,Got_Loop	; repeat 6 times
 
 Got_Move:	; Routine 2
-		moveq	#$10,d1		; set horizontal speed
+		moveq	#8,d1		; set horizontal speed
 		move.w	got_mainX(a0),d0
 		cmp.w	obX(a0),d0	; has item reached its target position?
 		beq.s	loc_C61A	; if yes, branch
@@ -131,9 +131,6 @@ locret_C692:
 
 Got_AddBonus:
 		jsr	(AddPoints).l
-		move.b	(v_vbla_byte).w,d0
-		andi.b	#3,d0
-		bne.s	locret_C692
 		sfx	sfx_Switch,1,0,0	; play "blip" sound
 ; ===========================================================================
 
@@ -150,7 +147,7 @@ Got_NextLevel:	; Routine $A
 		tst.w	d0
 		bne.s	Got_ChkSS
 		move.b	#id_Sega,(v_gamemode).w
-		bra.s	Got_Display2
+		bra.w	Got_Display
 ; ===========================================================================
 
 Got_ChkSS:
@@ -158,13 +155,11 @@ Got_ChkSS:
 		tst.b	(f_bigring).w	; has Sonic jumped into	a giant	ring?
 		beq.s	VBla_08A	; if not, branch
 		move.b	#id_Special,(v_gamemode).w ; set game mode to Special Stage (10)
-		bra.s	Got_Display2
+		bra.w	Got_Display
 ; ===========================================================================
 
 VBla_08A:
 		move.w	#1,(f_restart).w ; restart level
-
-Got_Display2:
 		bra.w	DisplaySprite
 ; ===========================================================================
 ; ---------------------------------------------------------------------------

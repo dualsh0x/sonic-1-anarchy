@@ -429,7 +429,7 @@ loc_43A:
 		move.l	(sp)+,(v_spbuffer).w
 		addq.w	#2,sp
 		movem.l	d0-a7,(v_regbuffer).w
-		bsr.w	ShowErrorMessage
+		bsr.s	ShowErrorMessage
 		move.l	2(sp),d0
 		bsr.w	ShowErrorValue
 		move.l	(v_spbuffer).w,d0
@@ -440,7 +440,7 @@ loc_43A:
 loc_462:
 		disable_ints
 		movem.l	d0-a7,(v_regbuffer).w
-		bsr.w	ShowErrorMessage
+		bsr.s	ShowErrorMessage
 		move.l	2(sp),d0
 		bsr.w	ShowErrorValue
 
@@ -2041,9 +2041,9 @@ GM_Sega:
 		moveq	#palid_SegaBG,d0
 		bsr.w	PalLoad2	; load Sega logo palette
 		move.w	#-$A,(v_pcyc_num).w
-		move.w	#0,(v_pcyc_time).w
-		move.w	#0,(v_pal_buffer+$12).w
-		move.w	#0,(v_pal_buffer+$10).w
+		clr.w	(v_pcyc_time).w
+		clr.w	(v_pal_buffer+$12).w
+		clr.w	(v_pal_buffer+$10).w
 		move.w	(v_vdp_buffer1).w,d0
 		ori.b	#$40,d0
 		move.w	d0,(vdp_control_port).l
@@ -2100,17 +2100,10 @@ GM_Title:
 	Tit_ClrObj1:
 		move.l	d0,(a1)+
 		dbf	d1,Tit_ClrObj1	; fill object space ($D000-$EFFF) with 0
-
-		locVRAM	0
-		lea	(Nem_JapNames).l,a0 ; load Japanese credits
-		bsr.w	NemDec
+    
 		locVRAM	$14C0
 		lea	(Nem_CreditText).l,a0 ;	load alphabet
 		bsr.w	NemDec
-		lea	($FF0000).l,a1
-		lea	(Eni_JapNames).l,a0 ; load mappings for	Japanese credits
-		move.w	#0,d0
-		bsr.w	EniDec
 
 		copyTilemap	$FF0000,$C000,$27,$1B
 
@@ -8529,10 +8522,6 @@ Nem_TitleSonic:	incbin	"artnem\Title Screen Sonic.bin"
 		even
 Nem_TitleTM:	incbin	"artnem\Title Screen TM.bin"
 		even
-Eni_JapNames:	incbin	"tilemaps\Hidden Japanese Credits.bin" ; Japanese credits (mappings)
-		even
-Nem_JapNames:	incbin	"artnem\Hidden Japanese Credits.bin"
-		even
 
 Map_Sonic:	include	"_maps\Sonic.asm"
 SonicDynPLC:	include	"_maps\Sonic - Dynamic Gfx Script.asm"
@@ -8932,12 +8921,6 @@ Nem_CreditText:	incbin	"artnem\Ending - Credits.bin"
 		even
 Nem_EndStH:	incbin	"artnem\Ending - StH Logo.bin"
 		even
-
-		if Revision=0
-		dcb.b $104,$FF			; why?
-		else
-		dcb.b $40,$FF
-		endc
 ; ---------------------------------------------------------------------------
 ; Collision data
 ; ---------------------------------------------------------------------------
@@ -9128,8 +9111,6 @@ byte_6A320:	dc.b 0,	0, 0, 0
 Art_BigRing:	incbin	"artunc\Giant Ring.bin"
 		even
 
-		align	$100,$FF
-
 ; ---------------------------------------------------------------------------
 ; Sprite locations index
 ; ---------------------------------------------------------------------------
@@ -9271,13 +9252,6 @@ ObjPos_SBZ1pf6:	incbin	"objpos\sbz1pf6.bin"
 ObjPos_End:	incbin	"objpos\ending.bin"
 		even
 ObjPos_Null:	dc.b $FF, $FF, 0, 0, 0,	0
-
-		if Revision=0
-		dcb.b $62A,$FF
-		else
-		dcb.b $63C,$FF
-		endc
-		;dcb.b ($10000-(*%$10000))-(EndOfRom-SoundDriver),$FF
 
 SoundDriver:	include "s1.sounddriver.asm"
 

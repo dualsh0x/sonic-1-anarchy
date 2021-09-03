@@ -26,7 +26,7 @@ Pole_Main:	; Routine 0
 		move.b	#$E1,obColType(a0)
 		moveq	#0,d0
 		move.b	obSubtype(a0),d0 ; get object type
-		mulu.w	#60,d0		; multiply by 60 (1 second)
+		muls.w	#60,d0		; multiply by 60 (1 second)
 		move.w	d0,pole_time(a0) ; set breakage time
 
 Pole_Action:	; Routine 2

@@ -61,7 +61,7 @@ Crab_Action:	; Routine 2
 ; ===========================================================================
 
 @waittofire:
-		subq.w	#1,crab_timedelay(a0) ; subtract 1 from time delay
+		subq.b	#1,crab_timedelay(a0) ; subtract 1 from time delay
 		bpl.s	@dontmove
 		tst.b	obRender(a0)
 		bpl.s	@movecrab
@@ -70,7 +70,7 @@ Crab_Action:	; Routine 2
 
 	@movecrab:
 		addq.b	#2,ob2ndRout(a0)
-		move.w	#127,crab_timedelay(a0) ; set time delay to approx 2 seconds
+		st.b	crab_timedelay(a0) ; set time delay to approx 2 seconds
 		move.w	#$80,obVelX(a0)	; move Crabmeat	to the right
 		bsr.w	Crab_SetAni
 		addq.b	#3,d0
@@ -85,7 +85,7 @@ Crab_Action:	; Routine 2
 ; ===========================================================================
 
 @fire:
-		move.w	#59,crab_timedelay(a0)
+		move.b	#59,crab_timedelay(a0)
 		move.b	#6,obAnim(a0)	; use firing animation
 		bsr.w	FindFreeObj
 		bne.s	@failleft
@@ -111,7 +111,7 @@ Crab_Action:	; Routine 2
 ; ===========================================================================
 
 @walkonfloor:
-		subq.w	#1,crab_timedelay(a0)
+		subq.b	#1,crab_timedelay(a0)
 		bmi.s	loc_966E
 		bsr.w	SpeedToPos
 		bchg	#0,crab_mode(a0)
@@ -143,7 +143,7 @@ loc_9654:
 
 loc_966E:
 		subq.b	#2,ob2ndRout(a0)
-		move.w	#59,crab_timedelay(a0)
+		move.b	#59,crab_timedelay(a0)
 		move.w	#0,obVelX(a0)
 		bsr.w	Crab_SetAni
 		move.b	d0,obAnim(a0)

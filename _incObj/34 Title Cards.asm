@@ -70,7 +70,7 @@ Card_Loop:
 		dbf	d1,Card_Loop	; repeat sequence another 3 times
 
 Card_ChkPos:	; Routine 2
-		moveq	#$10,d1		; set horizontal speed
+		moveq	#8,d1		; set horizontal speed
 		move.w	card_mainX(a0),d0
 		cmp.w	obX(a0),d0	; has item reached the target position?
 		beq.s	Card_NoMove	; if yes, branch
